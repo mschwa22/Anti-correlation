@@ -148,7 +148,7 @@ for m in range(len(Mean_EW)):
 
 # Make a list of indices where the result is 'D' for each DIB in each line of sight
 
-good_result = [ [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []]
+good_result = [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []]
 
 for s in range(len(good_result)):
     for n in range(len(Result[s])):
