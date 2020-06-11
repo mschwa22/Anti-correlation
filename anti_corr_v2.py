@@ -5,6 +5,7 @@ Created on Wed Jun  3 14:07:08 2020
 @author: maddy
 """
 import pandas as pd
+import numpy as np
 
 DIB_data = pd.read_excel('DIB Measurements for APO Catalog.xlsx', index_col = None)
 sight_data = pd.read_excel('Info on sight lines.xlsx', index_col = 0).T
@@ -85,6 +86,14 @@ if method.lower() == 'max':
         Mean_EW_Norm = Mean_EW_Norm.sort_values(by = 'Data Count', ascending = False)
         
         # Find correlation between the wanted amount of DIBs
-        pears_corr = Mean_EW_Norm[0:int(amount)].corr(method = 'pearson')
+        Mean_EW_Norm = Mean_EW_Norm.astype(np.float64)
+        pears_corr = Mean_EW_Norm[0:int(amount)].T.corr(method = 'pearson')
     
+    if normalize.lower() == 'no':
         
+        Mean_EW.insert(25, 'Data Count', count, False)
+        Mean_EW = Mean_EW.sort_values(by = 'Data Count', ascending = False)
+        
+        # Find correlation between the wanted amount of DIBs
+        Mean_EW = Mean_EW.astype(np.float64)
+        pears_corr = Mean_EW[0:int(amount)].T.corr(method = 'pearson')
