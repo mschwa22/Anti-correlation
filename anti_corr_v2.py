@@ -89,7 +89,7 @@ if method.lower() == 'max':
         Mean_EW_Norm = Mean_EW_Norm.astype(np.float64)
         pears_corr = Mean_EW_Norm[0:int(amount)].T.corr(method = 'pearson')
     
-    if normalize.lower() == 'no':
+    elif normalize.lower() == 'no':
         
         Mean_EW.insert(25, 'Data Count', count, False)
         Mean_EW = Mean_EW.sort_values(by = 'Data Count', ascending = False)
