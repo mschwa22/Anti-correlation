@@ -6,6 +6,7 @@ Created on Wed Jun  3 14:07:08 2020
 """
 import pandas as pd
 import numpy as np
+import seaborn as sb
 
 DIB_data = pd.read_excel('DIB Measurements for APO Catalog.xlsx', index_col = None)
 sight_data = pd.read_excel('Info on sight lines.xlsx', index_col = 0).T
