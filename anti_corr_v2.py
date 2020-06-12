@@ -97,3 +97,6 @@ if method.lower() == 'max':
         # Find correlation between the wanted amount of DIBs
         Mean_EW = Mean_EW.astype(np.float64)
         pears_corr = Mean_EW[0:int(amount)].T.corr(method = 'pearson')
+
+    # Visualize the pearson correlation between all of the dibs
+    sb.heatmap(pears_corr, xticklabels = pears_corr.columns, yticklabels = pears_corr.columns, cmap='viridis', annot = True, linewidth = 0.5)
