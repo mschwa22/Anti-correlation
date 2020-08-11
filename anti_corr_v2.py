@@ -90,12 +90,15 @@ while n < 25:
 Mean_EW_uplim = Mean_EW.add(Mean_Error)
 Mean_EW_lowlim = Mean_EW.sub(Mean_Error)
 
+Mean_Error_Norm = pd.DataFrame(columns = Mean_Error.columns)
+
 # Normalize the data
 normalize = input('Would you like to normalize the data? ')
 if normalize.lower() == 'yes':
     Mean_EW_Norm = Mean_EW.div(sight_data.iloc[0])
     Mean_EW_uplim_Norm = Mean_EW_uplim.div(sight_data.iloc[0])
     Mean_EW_lowlim_Norm = Mean_EW_lowlim.div(sight_data.iloc[0])
+    Mean_Error_Norm = Mean_Error.div(sight_data.iloc[0])
  
        
 method = input('Enter the method in which you would like to select the DIBs (Max, Select, Error) ')
@@ -137,8 +140,8 @@ if method.lower() == 'max':
         title = 'Non-normalized Data Pearson Correlation'
 
     # Create a list of the wavelengths of the used DIBs. Then create a heatmap to visually display the data correlations
-    labels = list(DIBs['Wav'].iloc[0:int(amount)])
-    sb.heatmap(pears_corr, xticklabels = labels, yticklabels = labels, cmap='viridis', annot = True, linewidth = 0.5, annot_kws = {'fontsize': 6}).set(title = title)
+    waves = list(DIBs['Wav'].iloc[0:int(amount)])
+    sb.heatmap(pears_corr, xticklabels = waves, yticklabels = waves, cmap='viridis', annot = True, linewidth = 0.5, annot_kws = {'fontsize': 6}).set(title = title)
     
 elif method.lower() == 'select':
     
@@ -179,9 +182,9 @@ elif method.lower() == 'select':
 
         
         # Create a list of the wavelengths of the used DIBs. Then create a heatmap to visually display the data correlations
-        labels = list(DIBs['Wav'].loc[DIBs['Data Count'] >= int(min_data)])
+        waves = list(DIBs['Wav'].loc[DIBs['Data Count'] >= int(min_data)])
         fig, ax = plt.subplots(figsize = (15,10))
-        sb.heatmap(pears_corr, xticklabels = labels, yticklabels = labels, cmap='viridis', ax = ax).set(title = title)
+        sb.heatmap(pears_corr, xticklabels = waves, yticklabels = waves, cmap='viridis', ax = ax).set(title = title)
         plt.tick_params(axis = 'x', labelsize = 10)
         plt.tick_params(axis = 'y', labelsize = 10)
         plt.show()
@@ -198,7 +201,11 @@ elif method.lower() == 'select':
         
     elif selection.lower() == 'wavelength':
         
-        wavelengths = input('Please enter the wavlength (without the decimals) of wanted DIBs. ')
+        # The known DIBs that are 4429,4501,5780,5797,6195,6379,6284,6613,7224,6269,5849,6353,6792,4963,4984
+        
+        #4429,4501,5780,5797,6195,6379,6284,7224,5849,6353,6792,4963,4984,6203,6660,6376,6439,6702,6699,5766,6185,6089,6377,6993,6367,6330,6622,7367,6449,5546,6211,6324,6065,6116,6553,4726,6108,6729,5923,6520,7562,7030,6492,6362,5705,5418,7559,6234,6397,4762,6973,6223,5793,6271,6597,6463,5545,5785,5512,6268,6139,6665,6445,5828,6795
+        
+        wavelengths = input('Please enter the wavelength (without the decimals) of wanted DIBs. ')
         wavelengths = wavelengths.strip(' ').split(',')
         wavelengths = [int(i) for i in wavelengths]
         
@@ -208,6 +215,7 @@ elif method.lower() == 'select':
         spec_DIBs = pd.DataFrame(columns = Mean_EW.columns)
         spec_DIBs_uplim = pd.DataFrame(columns = Mean_EW.columns)
         spec_DIBs_lowlim = pd.DataFrame(columns = Mean_EW.columns)
+        spec_DIBs_Err = pd.DataFrame(columns = Mean_Error.columns)
         
         # Find index of the wanted DIBs based off of the wavelength given
         for wave in wavelengths:
@@ -225,6 +233,9 @@ elif method.lower() == 'select':
                 data_lowlim = Mean_EW_lowlim_Norm.iloc[indeces - 2]
                 spec_DIBs_lowlim = spec_DIBs_lowlim.append(data_lowlim)
                 
+                data_err = Mean_Error_Norm.iloc[indeces - 2]
+                spec_DIBs_Err = spec_DIBs_Err.append(data_err)
+                
                 title = 'Selected DIBs with Normalized Data for Pearson Correlation'
                 
             elif normalize.lower() == 'no':
@@ -238,21 +249,28 @@ elif method.lower() == 'select':
                 data_lowlim = Mean_EW_lowlim.iloc[indeces - 2]
                 spec_DIBs_lowlim = spec_DIBs_lowlim.append(data_lowlim)
                 
+                data_err = Mean_Error.iloc[indeces - 2]
+                spec_DIBs_Err = spec_DIBs_Err.append(data_err)
+                
                 title = 'Selected DIBs with Raw Data for Pearson Correlation'
         
         spec_DIBs = spec_DIBs.astype(np.float64)
         spec_DIBs_uplim = spec_DIBs_uplim.astype(np.float64)
         spec_DIBs_lowlim = spec_DIBs_lowlim.astype(np.float64)
-        
-        #waves = [4501,5780,5797,6379,6284,6613,7224,6270,5850,6353,6792,5789,4963,4984]
+        spec_DIBs_Err = spec_DIBs_Err.astype(np.float64)
         
         pears_corr = spec_DIBs.T.corr(method = 'pearson')
+        
+        
+        # rename the column names and indeces
+        pears_corr.columns = wavelengths
+        pears_corr.index = wavelengths
         
         # To better organize the correlation data, take the average r values for each DIB and display them from highest to lowest ascending values.
         pears_corr['average'] = pears_corr.mean(axis = 1)
         pears_corr = pears_corr.sort_values(by = 'average', ascending  = False)
         
-        waves = list(DIBs['Wav'].iloc[pears_corr.index - 2])
+        waves = pears_corr.index
         #sb.heatmap(pears_corr, xticklabels = waves, yticklabels = waves, cmap='viridis', annot = True, linewidth = 0.5, annot_kws = {'fontsize': 6}).set(title = title)
         fig, ax = plt.subplots(figsize = (15,10))
         sb.heatmap(pears_corr.iloc[:, :-1], xticklabels = wavelengths, yticklabels = waves, cmap='viridis', ax = ax).set(title = title)
@@ -348,8 +366,8 @@ elif method.lower() == 'error':
 # above and below the line.
  
 # So far, this part only works if the DIB selection is selected by inputing the wavelengths of the DIBs that you want to use.
-import scipy.cluster.hierarchy as shc
 
+import scipy.cluster.hierarchy as shc
 plt.figure(figsize=(10, 7))
 plt.title('DIB Clustering')
 dend = shc.dendrogram(shc.linkage(pears_corr, method='ward'))
@@ -362,23 +380,100 @@ cluster = AgglomerativeClustering(n_clusters = int(n_clusters), affinity='euclid
 groups = cluster.fit_predict(pears_corr)
 
 
+group_0 = []
 group_1 = []
 group_2 = []
 group_3 = []
 group_4 = []
-group_5 = []
 
 for k in range(len(groups)):
     if groups[k] == 0:
-        group_1.append(waves[k])
+        group_0.append(waves[k])
     elif groups[k] == 1:
-        group_2.append(waves[k])
+        group_1.append(waves[k])
     elif groups[k] == 2:
-        group_3.append(waves[k])
+        group_2.append(waves[k])
     elif groups[k] == 3:
-        group_4.append(waves[k])
+        group_3.append(waves[k])
     elif groups[k] == 4:
-        group_5.append(waves[k])
+        group_4.append(waves[k])
 
 print(' ')       
-print('The following are clusters of DIBs \n Group 1: ', group_1, '\n Group 2: ', group_2, '\n Group 3: ', group_3, '\n Group 4: ', group_4)
+print('The following are clusters of DIBs \n Group 0: ', group_0, '\n Group 1: ', group_1, '\n Group 2: ', group_2, '\n Group 3: ', group_3, '\n Group 4: ', group_4)
+
+## Try a k-means approach to clustering
+#from sklearn.cluster import KMeans
+#DIB_labels = waves
+#data_Kmeans = []
+
+#for i in range(len(pears_corr.iloc[:, :-1])):
+   # data_slice = pears_corr.iloc[i].to_list()
+    #data_Kmeans.append(data_slice[1:])
+
+#data_Kmeans = np.array(data_Kmeans)
+#kmeans_3 = KMeans(n_clusters=3)
+#kmeans_3.fit(data_Kmeans)
+#y_kmeans_3 = kmeans_3.predict(data_Kmeans)
+#for i in range(3):
+   # idx = y_kmeans_3 == i
+   # print("Group {i}: ".format(i=i) + str(DIB_labels[idx]))
+
+#kmeans_4 = KMeans(n_clusters=4)
+#kmeans_4.fit(data_Kmeans)
+#y_kmeans_4 = kmeans_4.predict(data_Kmeans)
+#for i in range(4):
+   # idx = y_kmeans_4 == i
+    #print("Group {i}: ".format(i=i) + str(DIB_labels[idx]))
+
+
+## Create a plot that shows the clustering. It will colour them based off of the groups they have been put into. The plot is going to be a 2D plot
+# of the correlations between 5797 and 5780 (very similar DIBs). The x-axis is all correlations with 5797 and the y-axis is with 5780.
+plt.scatter(pears_corr[5418], pears_corr[5797], c = groups, cmap = 'viridis')
+
+# To label each plot point
+for i in range(pears_corr.shape[0]):
+    plt.annotate(pears_corr.index.tolist()[i], (pears_corr[5418].tolist()[i] + 0.01, pears_corr[5797].tolist()[i] + 0.01), fontsize = 7)
+
+plt.tight_layout()
+
+plt.xlabel('5418')
+plt.ylabel('5797')
+plt.title('Clustering Representation from Correlations with 5418 and 5797')
+plt.show()
+
+final_clusters = [group_0, group_1, group_2, group_3, group_4]
+
+# Create plots that show the normalized mean EW of each DIB as a function of 5780/5797 normalized mean EW for each cluster.
+# The y-axis EW's are then normalized again by the maximum wavelength for each DIB so that they all have a max peak at 1.
+# Take the log of the x-axis so that it is more evenly spread out and easier to read
+for clust in range(len(final_clusters)):
+    plt.subplot(2,3,clust + 1)
+    for i in final_clusters[clust]:
+        num = wavelengths.index(i)
+        max_EW = spec_DIBs.iloc[num].max()
+        xerr = spec_DIBs_Err.iloc[2]/spec_DIBs_Err.iloc[3]
+        yerr = abs(spec_DIBs_Err.iloc[num].transform(np.log, axis = 0))
+        plt.errorbar((spec_DIBs.iloc[2]/spec_DIBs.iloc[3]).transform(np.log, axis = 0), (spec_DIBs.iloc[num].div(max_EW)), fmt = 'o')
+        plt.title('Group {0}'.format(clust))
+        plt.xlabel('log(5780/5797 EW)')
+        plt.ylabel('Norm EW / Max EW')
+plt.tight_layout()
+plt.show()
+
+# Make a correlation amtrix between the 3 yellow DIBs EW (not normalized) and the EB-V
+yellow_DIBs = pd.DataFrame(columns = spec_DIBs.columns)
+for i in group_4:
+    num = wavelengths.index(i)
+    raw_data = spec_DIBs.iloc[num].mul(sight_data.iloc[0])
+    yellow_DIBs = yellow_DIBs.append(raw_data)
+
+yellow_DIBs.index = group_4
+yellow_DIBs = yellow_DIBs.append(sight_data.iloc[0])
+pears_corr_yellow = yellow_DIBs.T.corr(method = 'pearson')
+
+# Create a heatmap so that the correlations can easily be visualized
+fig, ax = plt.subplots(figsize = (15,10))
+sb.heatmap(pears_corr_yellow, xticklabels = yellow_DIBs.index, yticklabels = yellow_DIBs.index, cmap='viridis', ax = ax, annot = True, linewidth = 0.5).set(title = 'Correlation Between Yellow DIBs EW and EB-V')
+plt.show()
+    
+        
